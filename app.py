@@ -137,11 +137,10 @@ def call_restsearch():
             "text": result_text,
             "actions": {
                 "label": "ぐるなびで見る",
-                "url": url
+                "uri": url
             }
         }
         response_json_list.append(result_dict)
-
     return response_json_list
 
 # カルーセルテンプレート作成
@@ -154,13 +153,12 @@ def carouselTemplate(j):
             actions=[
                 URITemplateAction(
                     label=column["actions"]["label"],
-                    url=column["actions"]["url"],
+                    uri=column["actions"]["uri"],
                 )
             ]
         )
         for column in j
     ]
-
     messages = TemplateSendMessage(
         alt_text="飲食店の情報をお伝えします。",
         template=CarouselTemplate(columns=columns),
@@ -233,7 +231,7 @@ def call_restsearch2():
         "text": result_text,
         "actions": {
             "label": "ぐるなびで見る",
-            "url": url
+            "uri": url
         }
     }
     return result_dict
@@ -253,7 +251,7 @@ def template(j):
             # urlに飛ぶ
             actions=[
                 URIAction(
-                    url = j["actions"]["url"],
+                    uri = j["actions"]["uri"],
                     label = j["actions"]["label"]
                 )
             ]
@@ -354,7 +352,7 @@ def handle_location_message(event):
     m = "緯度：{0}  /  経度：{1}".format(user_lat, user_longit)
     line_bot_api.reply_message(
         event.reply_token,
-        messages=m
+        TextSendMessage(text=m)
     )
 
 
