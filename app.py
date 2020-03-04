@@ -137,7 +137,7 @@ def call_restsearch():
             "text": result_text,
             "actions": {
                 "label": "ぐるなびで見る",
-                "uri": url
+                "url": url
             }
         }
         response_json_list.append(result_dict)
@@ -154,7 +154,7 @@ def carouselTemplate(j):
             actions=[
                 URITemplateAction(
                     label=column["actions"]["label"],
-                    uri=column["actions"]["uri"],
+                    url=column["actions"]["url"],
                 )
             ]
         )
@@ -233,7 +233,7 @@ def call_restsearch2():
         "text": result_text,
         "actions": {
             "label": "ぐるなびで見る",
-            "uri": url
+            "url": url
         }
     }
     return result_dict
@@ -253,7 +253,7 @@ def template(j):
             # urlに飛ぶ
             actions=[
                 URIAction(
-                    uri = j["actions"]["url"],
+                    url = j["actions"]["url"],
                     label = j["actions"]["label"]
                 )
             ]
@@ -321,15 +321,15 @@ def handle_message(event):
             )
         )
     elif '近く' in text:
-        f = call_restsearch2()
-        m = template(f)
+        f = call_restsearch()
+        m = carouselTemplate(f)
         line_bot_api.reply_message(
             event.reply_token,
             messages=m
         )
     elif 'どこか' in text:
-        f = call_restsearch()
-        m = carouselTemplate(f)
+        f = call_restsearch2()
+        m = template(f)
         line_bot_api.reply_message(
             event.reply_token,
             messages=m
