@@ -32,6 +32,7 @@ import os
 import sys
 import requests
 import json
+import random
 import datetime
 
 # 軽量なウェブアプリケーションフレームワーク:Flask
@@ -64,15 +65,16 @@ NO_HIT_ERR_MESSAGE = "お近くにぐるなびに登録されている喫茶店�
 LINK_TEXT = "ぐるなびで見る"
 IMAGE_URL = "a.png"
 
-# ぐるなびAPI利用
-def call_restsearch(latitude, longitude):
+
+# ぐるなびAPI利用１　（全部見る）
+def call_restsearch():
     # ぐるなびAPIに接続して取得
-    params = {
-        "keyid": GNAVI_API_KEY,
-        "latitude": latitude,
-        "longitude": longitude,
-        "range": 5
-    }
+    # params = {
+    #     "keyid": GNAVI_API_KEY,
+    #     "latitude": latitude,
+    #     "longitude": longitude,
+    #     "range": 5
+    # }
     # response = requests.get(RESTSEARCH_URL, params)
     # result = response.json()
     # # print(result)
@@ -169,28 +171,96 @@ def carouselTemplate(j):
 
 
 
-# ボタン押したらurlに飛ぶやつ
-def make_button_template(Ctext, Ctitle, Cimageurl, Curl, Clabel):
+# ぐるなびAPI利用２　（ランダムで一つ）
+def call_restsearch2():
+    # ぐるなびAPIに接続して取得
+    # params = {
+    #     "keyid": GNAVI_API_KEY,
+    #     "latitude": latitude,
+    #     "longitude": longitude,
+    #     "range": 5
+    # }
+    # response = requests.get(RESTSEARCH_URL, params)
+    # result = response.json()
+    # # print(result)
+    # if "error" in result:
+    #     if "message" in result:
+    #         raise Exception("{}".format(result["message"]))
+    #     else:
+    #         raise Exception(DEF_ERR_MESSAGE)
+    # # ヒットする飲食店がなかったら
+    # total_hit_count = result.get("total_hit_count", 0)
+    # if total_hit_count < 1:
+    #     raise Exception(NO_HIT_ERR_MESSAGE)
+
+    f = open("gunavi.json", 'r')
+    result =  json.load(f) #JSON形式で読み込む
+
+
+    # 取得したい飲食店データのみにする
+    r = result.get("rest")
+    i = random.randint(0,len(r)-1)
+    # 店舗名
+    name = r[i].get("name", "")
+    # 店舗名かな
+    # カテゴリー
+    category = r[i].get("category", "")
+    # サイトurl
+    url = r[i].get("url", "")
+    # url = r[i].get("url_mobile", "")
+    # 店舗画像
+    image_url = r[i].get("image_url", {})
+    if image_url.get("shop_image1", "") != "":
+        image = image_url.get("shop_image1", "")
+    elif image_url.get("shop_image2", "") != "":
+        image = image_url.get("shop_image2", "")
+    else:
+        image = BOT_SERVER_URL + "/static/{}".format(IMAGE_URL)
+    # 開店時間
+    opentime = "営業時間: {}".format(r[i].get("opentime", ""))
+    # 定休日
+    holiday = "定休日: {}".format(r[i].get("holiday", ""))
+    # アクセス
+    access = r[i].get("access", {})
+    access_info = "{0}  {1}分".format(access.get("station", ""), access.get("walk", ""))
+    result_text = category + "\n" + opentime + "\n" + holiday + "\n" + access_info
+    if len(result_text) > 60:
+        result_text = result_text[:56] + "..."
+
+    result_dict = {
+        "thumbnail_image_url": image,
+        "title": name,
+        "text": result_text,
+        "actions": {
+            "label": "ぐるなびで見る",
+            "uri": url
+        }
+    }
+    return result_dict
+
+# テンプレートメッセージ
+def template(j):
     message_template = TemplateSendMessage(
         # 代替テキスト（何らかの原因でテンプレートが表示できなかった場合に代わりに表示されるテキスト）
         alt_text="ボタンテンプレート",
         template=ButtonsTemplate(
-            text = Ctext,
-            title = Ctitle,
+            text = j["text"],
+            title = j["title"],
             # cover：画像領域全体に画像を表示します。contain：画像領域に画像全体を表示します。
             image_size="contain",
             # 任意の画像
-            thumbnail_image_url = Cimageurl,
+            thumbnail_image_url = j["thumbnail_image_url"],
             # urlに飛ぶ
             actions=[
                 URIAction(
-                    uri = Curl,
-                    label = Clabel
+                    uri = j["actions"]["url"],
+                    label = j["actions"]["label"]
                 )
             ]
         )
     )
     return message_template
+
 
 
 # "/"にGETリクエストを送ると、index.htmlを返す  (ルートのアドレスに以下のものを配置することを明言)
@@ -250,6 +320,20 @@ def handle_message(event):
                 ]
             )
         )
+    elif '近く' in text:
+        f = call_restsearch2()
+        m = template(f)
+        line_bot_api.reply_message(
+            event.reply_token,
+            messages=m
+        )
+    elif 'どこか' in text:
+        f = call_restsearch()
+        m = carouselTemplatef)
+        line_bot_api.reply_message(
+            event.reply_token,
+            messages=m
+        )
     else:
     	line_bot_api.reply_message(
             event.reply_token,
@@ -260,17 +344,17 @@ def handle_message(event):
 # 位置情報を受け取った時
 @handler.add(MessageEvent, message=LocationMessage)
 def handle_location_message(event):
-    # ユーザーの緯度経度取得
-    user_lat = event.message.latitude
-    user_longit = event.message.longitude
-    # ぐるなびAPIで探す
-    result = call_restsearch(user_lat, user_longit)
-    print("call_search_result is: {}".format(result))
-    m = carouselTemplate(result)
-    line_bot_api.reply_message(
-        event.reply_token,
-        messages=m
-    )
+    # # ユーザーの緯度経度取得
+    # user_lat = event.message.latitude
+    # user_longit = event.message.longitude
+    # # ぐるなびAPIで探す
+    # result = call_restsearch(user_lat, user_longit)
+    # print("call_search_result is: {}".format(result))
+    # m = carouselTemplate(result)
+    # line_bot_api.reply_message(
+    #     event.reply_token,
+    #     messages=m
+    # )
 
 
 # 日時選択アクションの返信
