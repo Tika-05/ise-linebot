@@ -344,17 +344,18 @@ def handle_message(event):
 # 位置情報を受け取った時
 @handler.add(MessageEvent, message=LocationMessage)
 def handle_location_message(event):
-    # # ユーザーの緯度経度取得
-    # user_lat = event.message.latitude
-    # user_longit = event.message.longitude
-    # # ぐるなびAPIで探す
+    # ユーザーの緯度経度取得
+    user_lat = event.message.latitude
+    user_longit = event.message.longitude
+    # ぐるなびAPIで探す
     # result = call_restsearch(user_lat, user_longit)
     # print("call_search_result is: {}".format(result))
     # m = carouselTemplate(result)
-    # line_bot_api.reply_message(
-    #     event.reply_token,
-    #     messages=m
-    # )
+    m = "緯度：{0}  /  経度：{1}".format(user_lat, user_longit)
+    line_bot_api.reply_message(
+        event.reply_token,
+        messages=m
+    )
 
 
 # 日時選択アクションの返信
