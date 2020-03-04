@@ -1,4 +1,18 @@
 #-*- coding: utf-8 -*-
+
+#  Licensed under the Apache License, Version 2.0 (the "License"); you may
+#  not use this file except in compliance with the License. You may obtain
+#  a copy of the License at
+#
+#       https://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#  License for the specific language governing permissions and limitations
+#  under the License.
+
+
 # インポートするライブラリ
 from flask import Flask, request, abort, render_template, jsonify
 
@@ -12,9 +26,11 @@ from linebot.models import (
     FollowEvent, MessageEvent, TextMessage, TextSendMessage, ImageMessage,
     ImageSendMessage, TemplateSendMessage, ButtonsTemplate, PostbackTemplateAction,
     MessageTemplateAction, URITemplateAction, VideoMessage, AudioMessage, StickerMessage,
-    URIAction, RichMenu, DatetimePickerTemplateAction, PostbackEvent
+    URIAction, RichMenu, DatetimePickerTemplateAction, PostbackEvent, LocationMessage, LocationSendMessage, CarouselColumn, CarouselTemplate
 )
 import os
+import sys
+import requests
 import json
 import datetime
 
@@ -26,8 +42,132 @@ app = Flask(__name__)
 LINE_CHANNEL_ACCESS_TOKEN = os.environ["LINE_CHANNEL_ACCESS_TOKEN"]
 #環境変数からLINE Channel Secretを設定
 LINE_CHANNEL_SECRET = os.environ["LINE_CHANNEL_SECRET"]
+# webhookURL
+BOT_SERVER_URL = "https://ise-linebot.herokuapp.com/"
+# グルナビAPI
+# GNAVI_API_KEY = os.environ["GNAVI_API_KEY"]
+GNAVI_API_KEY = "7df810893c166d344a1d660a15d8f294"
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
+
+if GNAVI_API_KEY is None:
+    print('GNAVI_API_KEYがないっすよ')
+    sys.exit(1)
+
+# ぐるなびAPI URL
+RESTSEARCH_URL = "https://api.gnavi.co.jp/RestSearchAPI/v3/"
+DEF_ERR_MESSAGE = """
+申し訳ありません、データを取得できませんでした。
+少し時間を空けて、もう一度試してみてください。
+"""
+NO_HIT_ERR_MESSAGE = "お近くにぐるなびに登録されている喫茶店はないようです" + chr(0x100017)
+LINK_TEXT = "ぐるなびで見る"
+IMAGE_URL = "a.png"
+
+# ぐるなびAPI利用
+def call_restsearch(latitude, longitude):
+    # ぐるなびAPIに接続して取得
+    params = {
+        "keyid": GNAVI_API_KEY,
+        "latitude": latitude,
+        "longitude": longitude,
+        "range": 5
+    }
+    # response = requests.get(RESTSEARCH_URL, params)
+    # result = response.json()
+    # # print(result)
+    # if "error" in result:
+    #     if "message" in result:
+    #         raise Exception("{}".format(result["message"]))
+    #     else:
+    #         raise Exception(DEF_ERR_MESSAGE)
+    # # ヒットする飲食店がなかったら
+    # total_hit_count = result.get("total_hit_count", 0)
+    # if total_hit_count < 1:
+    #     raise Exception(NO_HIT_ERR_MESSAGE)
+
+    f = open("gunavi.json", 'r')
+    result =  json.load(f) #JSON形式で読み込む
+
+    # 取得したい飲食店データのみにする
+    response_json_list = []
+    for (count, rest) in enumerate(result.get("rest")):
+        # 店舗名
+        name = rest.get("name", "")
+        # 店舗名かな
+        # カテゴリー
+        category = rest.get("category", "")
+        # サイトurl
+        url = rest.get("url", "")
+        # url = rest.get("url_mobile", "")
+        # 店舗画像
+        image_url = rest.get("image_url", {})
+        if image_url.get("shop_image1", "") != "":
+            image = image_url.get("shop_image1", "")
+        elif image_url.get("shop_image2", "") != "":
+            image = image_url.get("shop_image2", "")
+        else:
+            image = BOT_SERVER_URL + "/static/{}".format(IMAGE_URL)
+        # アドレス
+        # address = "住所: {}".format(rest.get("address", ""))
+        # 電話番号
+        # tell = "電話番号: {}".format(rest.get("tell", ""))
+        # 開店時間
+        opentime = "営業時間: {}".format(rest.get("opentime", ""))
+        # 定休日
+        holiday = "定休日: {}".format(rest.get("holiday", ""))
+        # アクセス
+        access = rest.get("access", {})
+        access_info = "{0}  {1}分".format(access.get("station", ""), access.get("walk", ""))
+        # 平均予算
+        # budget = "平均予算: {}".format(rest.get("budget", ""))
+        # PR文
+        # pr = rest.get("pr", "")
+        # pr_short = pr.get("pr_short", "")
+
+        result_text = category + "\n" + opentime + "\n" + holiday + "\n" + access_info
+        if len(result_text) > 60:
+            result_text = result_text[:56] + "..."
+
+        result_dict = {
+            "thumbnail_image_url": image,
+            "title": name,
+            "text": result_text,
+            "actions": {
+                "label": "ぐるなびで見る",
+                "uri": url
+            }
+        }
+        response_json_list.append(result_dict)
+
+    return response_json_list
+
+# カルーセルテンプレート作成
+def carouselTemplate(j):
+    columns = [
+        CarouselColumn(
+            thumbnail_image_url=column["thumbnail_image_url"],
+            title=column["title"],
+            text=column["text"],
+            actions=[
+                URITemplateAction(
+                    label=column["actions"]["label"],
+                    uri=column["actions"]["uri"],
+                )
+            ]
+        )
+        for column in j
+    ]
+
+    messages = TemplateSendMessage(
+        alt_text="飲食店の情報をお伝えします。",
+        template=CarouselTemplate(columns=columns),
+    )
+    print("messages is: {}".format(messages))
+    return messages
+
+
+
 
 # ボタン押したらurlに飛ぶやつ
 def make_button_template(Ctext, Ctitle, Cimageurl, Curl, Clabel):
@@ -58,10 +198,6 @@ def make_button_template(Ctext, Ctitle, Cimageurl, Curl, Clabel):
 def index():
     return 'ise'
 
-# @app.route('/imageup', methods=['GET'])
-# def imageup():
-#     return render_template('image.php')
-
 
 # 送られてきたメッセージがくる場所　処理する場所？
 @app.route("/callback", methods=['POST'])
@@ -85,6 +221,7 @@ def callback():
 
     #return 'OK'
     return jsonify({"state": 200})
+
 
 # MessageEvent　テキストメッセージ受け取った時
 @handler.add(MessageEvent, message=TextMessage)
@@ -119,7 +256,24 @@ def handle_message(event):
             TextSendMessage(text='「' + text + '」って何？')
          )
 
-#日時選択アクションの返信
+
+# 位置情報を受け取った時
+@handler.add(MessageEvent, message=LocationMessage)
+def handle_location_message(event):
+    # ユーザーの緯度経度取得
+    user_lat = event.message.latitude
+    user_longit = event.message.longitude
+    # ぐるなびAPIで探す
+    result = call_restsearch(user_lat, user_longit)
+    print("call_search_result is: {}".format(result))
+    m = carouselTemplate(result)
+    line_bot_api.reply_message(
+        event.reply_token,
+        messages=m
+    )
+
+
+# 日時選択アクションの返信
 @handler.add(PostbackEvent)
 def handle_postback(event):
     print("選択した日付 "+ event.postback.params['date'])
