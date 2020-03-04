@@ -329,7 +329,7 @@ def handle_message(event):
         )
     elif 'どこか' in text:
         f = call_restsearch()
-        m = carouselTemplatef)
+        m = carouselTemplate(f)
         line_bot_api.reply_message(
             event.reply_token,
             messages=m
