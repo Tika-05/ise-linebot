@@ -35,6 +35,8 @@ import json
 import random
 import datetime
 
+import itertools # 並び替え
+
 # 軽量なウェブアプリケーションフレームワーク:Flask
 # flaskの定義をする
 app = Flask(__name__)
@@ -379,6 +381,161 @@ def handle_sticker_message(event):
         TextSendMessage(text='遊ばず働け！！！'),
         # StickerSendMessage(package_id=event.message.package_id,sticker_id=event.message.sticker_id)
     )
+
+
+# ルーティングの文字を表示する
+@app.route('/message/<message>') # @app.route('/message/<message>')でルーティング
+def showMessage(message): # ルーティングされた処理を実装（showMessageメソッド)
+    return message # returnでmessageに入力された値を返す
+
+
+# メイクテンの計算をする
+# 正解の式格納
+formulalist = []
+@app.route('/makex/<int:n4>')
+# 受け取るメイン関数
+def make_x(n4):
+    # 各位の値を取り出し配列に格納する [千, 百, 十, 一]
+    num = [int(x) for x in list(str(n4))]
+    # 演算用関数
+    symbol = ['add', 'sub', 'rsub', 'mul', 'div', 'rdiv']
+
+    # 総当たりの並び替えの数繰り返す
+    for nl in itertools.permutations(num):
+        # 基準の数字を最初の式へ
+        ff = str(nl[-1])
+        # 式探索
+        search(nl, symbol, ff)
+
+    # 重複した式を消し新たなリストへ
+    fl = list(set(formulalist))
+    count = len(fl)
+    # rstr = ", ".join(fl)
+    print(f"{count}個見つかりました！")
+    return json.dumps(fl)
+
+
+# 正解の式探す（数字リスト、演算記号、式）
+def search(numlist, symlist, formula):
+    # 数字配列の残りの数
+    i = len(numlist)-1
+    # 全パターン終了
+    if i == 0:
+        return 0
+
+    elif i == 2:
+        search2(numlist, symlist, formula)
+
+    # add ~ rdiv まで演算繰り返す
+    for sym in symlist:
+        # 次の関数の為の計算後の数字配列
+        n = []
+        # これまでの式　一時的に保存する
+        f = formula
+        # 演算する
+        c = calc(numlist[i], numlist[i-1], sym)
+        # 0で割ることができないから弾く
+        if c == -9999:
+            continue
+        # 計算後の数字配列作成（上で計算した値を最後に入れる）
+        for j in range(i-1):
+            n.append(numlist[j])
+        n.append(c)
+        # 式作成
+        f = judgSymbol(sym, numlist[i-1], formula)
+
+        # 計算は最後まで出来たから結果求める
+        if i == 1:
+            if n[0] == 10:
+                # print(f + " = 10")
+                # 正解の式格納
+                formulalist.append(f)
+
+        # 次の符号を設定しに行く
+        search(n, symlist, f)
+    return 0
+
+
+
+
+def search2(numlist, symlist, formula):
+    # print(f"formula : {formula}")
+    for sym12 in symlist:
+        for sym01 in symlist:
+            # 演算する
+            c01 = calc(numlist[0], numlist[1], sym01)
+            # 0で割ることができないから弾く
+            if c01 == -9999:
+                continue
+            # 式作成
+            f01 = judgSymbol(sym01, numlist[1], str(numlist[0]))
+
+            # 計算は最後まで出来たから結果求める
+            # 0で割ることができないから弾く
+            if calc(c01, numlist[2], sym12) == -9999:
+                continue
+            elif calc(c01, numlist[2], sym12) == 10:
+                # 式作成
+                f12 = judgSymbol2(sym12, f01, formula)
+                # print(f12 + " = 10")
+                # 正解の式格納
+                formulalist.append(f12)
+    return 0
+
+
+# 式生成 （演算記号、演算する数字、これまでの式）
+def judgSymbol(s, x, f):
+    if s == 'add':
+        # f = '( ' + f + ' + {0}'.format(x) + ' )'
+        f = f"( {f} + {x} )"
+    elif s == 'sub':
+        f = f"( {f} - {x} )"
+    elif s == 'rsub':
+        # f = '( ' + '{0} -'.format(x) + " " + f + ' )'
+        f = f"( {x} - {f} )"
+    elif s == 'mul':
+        f = f"( {f} * {x} )"
+    elif s == 'div':
+        f = f"( {f} / {x} )"
+    elif s == 'rdiv':
+        f = f"( {x} / {f} )"
+    return f
+
+# 式生成２ （演算記号、演算する数字、これまでの式）
+def judgSymbol2(s, f01, f23):
+    if s == 'add':
+        f = f"{f01} + {f23}"
+    elif s == 'sub':
+        f = f"{f01} - {f23}"
+    elif s == 'rsub':
+        f = f"{f23} - {f01}"
+    elif s == 'mul':
+        f = f"{f01} * {f23}"
+    elif s == 'div':
+        f = f"{f01} / {f23}"
+    elif s == 'rdiv':
+        f = f"{f23} / {f01}"
+    return f
+
+# 演算する  0で割るは弾く
+def calc(x, y, s):
+    if s == 'add': # 加法
+        return x+y
+    elif s == 'sub': # 減法
+        return x-y
+    elif s == 'rsub': # 逆減法
+        return y-x
+    elif s == 'mul': # 乗法
+        return x*y
+    elif s == 'div': # 除法
+        if y == 0:
+            return -9999
+        return x/y
+    elif s == 'rdiv': # 逆除法
+        if x == 0:
+            return -9999
+        return y/x
+
 
 
 if __name__ == "__main__":
