@@ -396,7 +396,7 @@ formulalist = []
 # 受け取るメイン関数
 def make_x(n4):
     # 正解の式格納
-    formulalist = []
+    formulalist.clear()
     # 各位の値を取り出し配列に格納する [千, 百, 十, 一]
     num = [int(x) for x in list(str(n4))]
     # 演算用関数
