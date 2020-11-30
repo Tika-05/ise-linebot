@@ -1,0 +1,222 @@
+{
+    "2020-01-20 10": [
+        {
+            "id": 5076,
+            "date_with_hour": "2020-01-20 10",
+            "sur_temp": 11.125
+        },
+        {
+            "id": 5093,
+            "date_with_hour": "2020-01-20 10",
+            "sur_temp": 11.437
+        },
+        {
+            "id": 5058,
+            "date_with_hour": "2020-01-14 10",
+            "sur_temp": 17.125
+        },
+        {
+            "id": 5019,
+            "date_with_hour": "2020-01-14 10",
+            "sur_temp": 17.312
+        }
+    ],
+    "2020-01-20 09": [
+        {
+            "id": 5076,
+            "date_with_hour": "2020-01-20 09",
+            "sur_temp": 11.187
+        },
+        {
+            "id": 5093,
+            "date_with_hour": "2020-01-20 09",
+            "sur_temp": 10.75
+        },
+        {
+            "id": 5058,
+            "date_with_hour": "2020-01-14 09",
+            "sur_temp": 17.125
+        },
+        {
+            "id": 5019,
+            "date_with_hour": "2020-01-14 09",
+            "sur_temp": 17.312
+        }
+    ],
+    "2020-01-20 08": [
+        {
+            "id": 5076,
+            "date_with_hour": "2020-01-20 08",
+            "sur_temp": 11.25
+        },
+        {
+            "id": 5093,
+            "date_with_hour": "2020-01-20 08",
+            "sur_temp": 10.75
+        },
+        {
+            "id": 5058,
+            "date_with_hour": "2020-01-14 08",
+            "sur_temp": 17.125
+        },
+        {
+            "id": 5019,
+            "date_with_hour": "2020-01-14 08",
+            "sur_temp": 17.312
+        }
+    ],
+    "2020-01-20 17": [
+        {
+            "id": 5093,
+            "date_with_hour": "2020-01-20 17",
+            "sur_temp": 11.687
+        },
+        {
+            "id": 5076,
+            "date_with_hour": "2020-01-20 17",
+            "sur_temp": null
+        },
+        {
+            "id": 5058,
+            "date_with_hour": "2020-01-14 17",
+            "sur_temp": 17.125
+        },
+        {
+            "id": 5019,
+            "date_with_hour": "2020-01-14 17",
+            "sur_temp": 17.187
+        }
+    ],
+    "2020-01-20 16": [
+        {
+            "id": 5093,
+            "date_with_hour": "2020-01-20 16",
+            "sur_temp": 11.875
+        },
+        {
+            "id": 5076,
+            "date_with_hour": "2020-01-20 16",
+            "sur_temp": null
+        },
+        {
+            "id": 5058,
+            "date_with_hour": "2020-01-14 16",
+            "sur_temp": 17.125
+        },
+        {
+            "id": 5019,
+            "date_with_hour": "2020-01-14 16",
+            "sur_temp": 17.25
+        }
+    ],
+    "2020-01-20 15": [
+        {
+            "id": 5093,
+            "date_with_hour": "2020-01-20 15",
+            "sur_temp": 11.875
+        },
+        {
+            "id": 5076,
+            "date_with_hour": "2020-01-20 15",
+            "sur_temp": null
+        },
+        {
+            "id": 5058,
+            "date_with_hour": "2020-01-14 15",
+            "sur_temp": 17.125
+        },
+        {
+            "id": 5019,
+            "date_with_hour": "2020-01-14 15",
+            "sur_temp": 17.25
+        }
+    ],
+    "2020-01-20 14": [
+        {
+            "id": 5093,
+            "date_with_hour": "2020-01-20 14",
+            "sur_temp": 11.875
+        },
+        {
+            "id": 5076,
+            "date_with_hour": "2020-01-20 14",
+            "sur_temp": null
+        },
+        {
+            "id": 5058,
+            "date_with_hour": "2020-01-14 14",
+            "sur_temp": 17.125
+        },
+        {
+            "id": 5019,
+            "date_with_hour": "2020-01-14 14",
+            "sur_temp": 17.375
+        }
+    ],
+    "2020-01-20 13": [
+        {
+            "id": 5093,
+            "date_with_hour": "2020-01-20 13",
+            "sur_temp": 11.875
+        },
+        {
+            "id": 5076,
+            "date_with_hour": "2020-01-20 13",
+            "sur_temp": null
+        },
+        {
+            "id": 5058,
+            "date_with_hour": "2020-01-14 13",
+            "sur_temp": 17.187
+        },
+        {
+            "id": 5019,
+            "date_with_hour": "2020-01-14 13",
+            "sur_temp": 17.312
+        }
+    ],
+    "2020-01-20 12": [
+        {
+            "id": 5093,
+            "date_with_hour": "2020-01-20 12",
+            "sur_temp": 11.875
+        },
+        {
+            "id": 5076,
+            "date_with_hour": "2020-01-20 12",
+            "sur_temp": null
+        },
+        {
+            "id": 5058,
+            "date_with_hour": "2020-01-14 12",
+            "sur_temp": 17.187
+        },
+        {
+            "id": 5019,
+            "date_with_hour": "2020-01-14 12",
+            "sur_temp": 17.375
+        }
+    ],
+    "2020-01-20 11": [
+        {
+            "id": 5093,
+            "date_with_hour": "2020-01-20 11",
+            "sur_temp": 11.5
+        },
+        {
+            "id": 5076,
+            "date_with_hour": "2020-01-20 11",
+            "sur_temp": null
+        },
+        {
+            "id": 5058,
+            "date_with_hour": "2020-01-14 11",
+            "sur_temp": 17.187
+        },
+        {
+            "id": 5019,
+            "date_with_hour": "2020-01-14 11",
+            "sur_temp": 17.375
+        }
+    ]
+}
