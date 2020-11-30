@@ -47,6 +47,13 @@ LINE_CHANNEL_ACCESS_TOKEN = os.environ["LINE_CHANNEL_ACCESS_TOKEN"]
 LINE_CHANNEL_SECRET = os.environ["LINE_CHANNEL_SECRET"]
 # webhookURL
 BOT_SERVER_URL = "https://ise-linebot.herokuapp.com/"
+
+
+
+# ==============================================================================================================
+# ぐるなび
+# ==============================================================================================================
+
 # グルナビAPI
 # GNAVI_API_KEY = os.environ["GNAVI_API_KEY"]
 GNAVI_API_KEY = "7df810893c166d344a1d660a15d8f294"
@@ -263,6 +270,12 @@ def template(j):
 
 
 
+
+
+# ==============================================================================================================
+# メイン
+# ==============================================================================================================
+
 # "/"にGETリクエストを送ると、index.htmlを返す  (ルートのアドレスに以下のものを配置することを明言)
 @app.route('/', methods=['GET'])
 def index():
@@ -364,30 +377,16 @@ def handle_postback(event):
     print("選択した日付 "+ event.postback.params['date'])
 
 
-
-# 画像、ビデオ、音声受け取った時
-@handler.add(MessageEvent, message=(ImageMessage, VideoMessage, AudioMessage))
-def handle_content_message(event):
-    line_bot_api.reply_message(
-           event.reply_token,
-           TextSendMessage(text='あ、気に入ったので保存してサーバに上げときます笑')
-    )
-
-# スタンプ受け取った時
-@handler.add(MessageEvent, message=StickerMessage)
-def handle_sticker_message(event):
-    line_bot_api.reply_message(
-        event.reply_token,
-        TextSendMessage(text='遊ばず働け！！！'),
-        # StickerSendMessage(package_id=event.message.package_id,sticker_id=event.message.sticker_id)
-    )
-
-
 # ルーティングの文字を表示する
 @app.route('/message/<message>') # @app.route('/message/<message>')でルーティング
 def showMessage(message): # ルーティングされた処理を実装（showMessageメソッド)
     return message # returnでmessageに入力された値を返す
 
+
+
+# ==============================================================================================================
+# メイクテン
+# ==============================================================================================================
 
 # メイクテンの計算をする
 # 正解の式格納
@@ -540,6 +539,105 @@ def calc(x, y, s):
 
 
 
-if __name__ == "__main__":
-    port = int(os.getenv("PORT",8080))
-    app.run(host="0.0.0.0", port=port)
+
+# ==============================================================================================================
+# コンター図
+# ==============================================================================================================
+
+@app.route('/contour')
+def contour():
+	#伊勢湾の地図（補間）
+	import matplotlib.pyplot as plt
+	from mpl_toolkits.mplot3d import Axes3D
+	import numpy as np
+	from scipy import interpolate
+	import cartopy.crs as ccrs
+	import cartopy as cart
+	from cartopy.feature import ShapelyFeature
+	import itertools
+	from matplotlib.collections import LineCollection, PolyCollection
+	from matplotlib.widgets import Slider, AxesWidget
+	from datetime import datetime as dt
+	import cartopy.io.shapereader as shpreader
+	import json
+	import requests
+	import matplotlib.dates as mdates
+
+	#ブイデータ
+	f = open("static/low.json", 'r')
+	json_data = json.load(f)
+	print(json_data)
+
+	#itertools動かすためのやつ
+	try:
+		# Python 2
+		from future_builtins import filter
+	except ImportError:
+		# Python 3
+		pass
+
+	for sur in json_data:
+		#地図データ読み込み
+		fname = 'static/shapefile/N03-19_24_190101.shp'
+		shapes = list(shpreader.Reader(fname).geometries())
+
+		#地図下準備
+		plt.figure(figsize=[8,8])
+		ax = plt.axes(projection=ccrs.PlateCarree())
+		ax.add_geometries(shapes, ccrs.PlateCarree(), edgecolor='black', facecolor='gray', alpha=0.3)
+		#四隅の緯度経度
+		ax.set_xlim(136.894000, 136.874904)
+		ax.set_ylim(34.429164, 34.458822)
+
+		#ブイデータ調整
+		data1 = json_data[sur][0]['sur_temp']
+		data2 = json_data[sur][1]['sur_temp']
+		data3 = json_data[sur][2]['sur_temp']
+		data4 = json_data[sur][3]['sur_temp']
+
+		#四隅の温度
+		surface = {
+		'right_down℃': [136.894000, 34.429164, 11],
+			'right_up℃': [136.893946, 34.458562, 11],
+			'left_down℃': [136.875067, 34.429376, 11],
+			'left_up℃': [136.874904, 34.458822, 11]
+			}
+
+		#ブイの場所
+		#緯度経度現状では手作業で入力
+		if data1 is not None:
+			surface['t1'] = [136.882292, 34.433086, data1]
+		if data2 is not None:
+			surface['t2'] = [136.882748, 34.453933, data2]
+		if data3 is not None:
+			surface['t3'] = [136.882938, 34.443843, data3]
+		if data4 is not None:
+			surface['t4'] = [136.888527, 34.447917, data4]
+
+		x1,y1,z1 = zip(*surface.values())
+		xnew1, ynew1 = np.mgrid[136.875:136.895:0.001, 34.428:34.46:0.001]
+		#補間
+		rbf = interpolate.Rbf(x1, y1, z1, function='inverse')
+		znew1 = rbf(xnew1, ynew1)
+
+		#描画
+		plt.pcolormesh(xnew1, ynew1, znew1, cmap='jet', vmin=0, vmax=25)
+		shape_feature = ShapelyFeature(shpreader.Reader(fname).geometries(), ccrs.PlateCarree(), edgecolor='black')
+		ax.add_feature(shape_feature, facecolor='gray')
+		ax.scatter(x1,y1)
+		# plt.savefig("static/images/"+ "a" +".png")
+
+		file_name = "abc.png"
+		plt.savefig("static/images/"+file_name)   # 1日２〜３枚保存するから区別する
+
+		#Lolipopに画像転送
+		image_url = t_lolipop(file_name)
+
+		return image_url
+
+
+
+#
+# if __name__ == "__main__":
+#     port = int(os.getenv("PORT",8080))
+#     app.run(host="0.0.0.0", port=port)
